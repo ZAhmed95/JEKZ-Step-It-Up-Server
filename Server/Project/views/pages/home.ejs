@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <% include ../partials/header.ejs %>
+  </head>
+  <body>
+    <% include ../partials/nav.ejs %>
+
+    <h1><%= user %>'s Home Page</h1>
+    <br>
+    <a href=<%=`/${user}/territory`%>>View your territory</a>
+    <br>
+    <a href="/logout">Logout</a>
+  </body>
+</html>

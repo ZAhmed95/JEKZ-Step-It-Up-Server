@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Map Test</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+    integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+    integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+    crossorigin=""></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <style media="screen">
+      #map {
+        height: 500px;
+        width: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><%=user.username%>'s territory:</h1>
+    <div id="map">
+
+    </div>
+  </body>
+</html>
+
+<script type="text/javascript">
+
+  var width = 0.001;
+
+  var lat = 40.738;
+  var lng = -73.816;
+  var map = L.map('map').setView([lat, lng], 14);
+  L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+    maxZoom: 18,
+    id: 'mapbox.streets',
+    accessToken: 'pk.eyJ1IjoiemFobWVkOTUiLCJhIjoiY2phYWFxeGtpMGdlczJ3czQ3dHk0Ynh2OSJ9.bfLZdHn97kP-CYM49TNkNg'
+  }).addTo(map);
+
+  map.on('click', function(e){
+    updateData(coordsToBlock(e.latlng));
+  });
+
+  var territories = <%- JSON.stringify(data) %>;
+  var user = <%- JSON.stringify(user) %>;
+
+  var coordsToBlock = function(latlng){
+    lat = latlng.lat+90;
+    lng = latlng.lng+90;
+    return {
+      lat : Math.floor(lat/width),
+      lng : Math.floor(lng/width)
+    }
+  }
+
+  var drawPoly = function(latlng){
+    lat = latlng.lat*width-90;
+    lng = latlng.lng*width-90;
+    var poly = L.polygon([
+      [lat, lng],
+      [lat, lng+width],
+      [lat+width,lng+width],
+      [lat+width, lng]
+    ]).addTo(map);
+  }
+
+  for (var i = 0; i < territories.length; i++){
+    latlng = {
+      lat : territories[i].lat,
+      lng : territories[i].lng
+    }
+    drawPoly(latlng);
+  }
+
+  var updateData = function(latlng){
+    //make a post request to update data in user's database
+    $.ajax({
+      dataType : 'json',
+      type: "POST",
+      url: "/api/updateTerritory",
+      data: {
+        userid : user.userid,
+        lat : latlng.lat,
+        lng : latlng.lng
+      },
+      success : function(data){
+        if (data.status === "success"){
+          drawPoly(latlng);
+        }
+      }
+    });
+  }
+</script>
